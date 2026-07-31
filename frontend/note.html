@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Note — EchoNotes</title>
+<meta name="description" content="View and export your structured lecture notes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/styles.css">
+<style>
+  .note-layout { max-width: 840px; margin: 40px auto 80px; padding: 0 24px; min-height: 70vh; }
+  .note-header-area { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+  .note-title-display { font-size: clamp(28px, 4vw, 40px); margin-bottom: 8px; line-height: 1.2; }
+  .note-meta { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  
+  .export-group { display: flex; gap: 12px; background: var(--bg-2); padding: 8px; border-radius: 14px; border: 1px solid var(--border); }
+  .export-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; transition: all 0.2s; }
+  .export-btn:hover { background: var(--card-hover); border-color: var(--lime); color: var(--lime); transform: translateY(-2px); }
+  .export-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  
+  .note-content { font-size: 16px; line-height: 1.7; color: var(--text); }
+  .section-heading { font-size: 22px; color: var(--lime); margin: 40px 0 16px; }
+  .bullet-list { list-style: none; padding-left: 0; margin-bottom: 24px; }
+  .bullet-list li { position: relative; padding-left: 28px; margin-bottom: 14px; }
+  .bullet-list li::before { content: "→"; color: var(--muted); position: absolute; left: 0; font-family: 'JetBrains Mono', monospace; }
+  
+  .glossary-card { background: linear-gradient(180deg, var(--card) 0%, var(--bg-2) 100%); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-top: 60px; }
+  .glossary-title { font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .glossary-title::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--amber); }
+  .glossary-item { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed rgba(255,171,74,0.2); }
+  .glossary-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .glossary-term { font-family: 'JetBrains Mono', monospace; color: var(--amber); font-weight: 600; display: block; margin-bottom: 4px; }
+  
+  .raw-transcript-toggle { margin-top: 60px; text-align: center; }
+  .raw-transcript-box { display: none; background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted); margin-top: 16px; text-align: left; height: 300px; overflow-y: auto; }
+  .raw-transcript-box.open { display: block; }
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header class="navbar">
+  <div class="nav-inner">
+    <a href="dashboard.html" class="logo" aria-label="EchoNotes Dashboard"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</a>
+    <div class="nav-actions">
+      <a href="dashboard.html" class="btn btn-ghost">Back to Dashboard</a>
+    </div>
+  </div>
+</header>
+
+<main id="main-content" class="note-layout">
+  <div id="alert-message" class="alert" aria-live="polite" role="status"></div>
+  
+  <div id="note-container" aria-live="polite">
+    <!-- Loading State -->
+    <div style="text-align: center; padding: 60px 0; color: var(--muted);">Loading your notes...</div>
+  </div>
+</main>
+
+<!-- External Libraries for Exporting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/docx@8.2.3/build/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Our custom scripts -->
+<script src="./js/supabaseClient.js"></script>
+<script src="./js/export.js"></script>
+<script src="./js/note.js"></script>
+</body>
+</html>

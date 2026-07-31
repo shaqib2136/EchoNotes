@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoNotes — The Note-Taker Built for Every Ear, Eye, and Hand</title>
+<meta name="description" content="EchoNotes converts spoken lectures into organized, accessible notes in real time. Built for students with visual, hearing, or motor impairments.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060510; --bg-2:#0B0918; --card:#0F0D22; --card-hover:#151230;
+  --border:rgba(177,151,252,0.16); --border-strong:rgba(198,241,53,0.5);
+  --text:#EDEBFF; --muted:#A8A4C9; --violet:#B197FC; --violet-deep:#7C5CF0;
+  --lime:#C6F135; --lime-dark:#9BC219; --amber:#FFAB4A; --coral:#FF6F91; --cyan:#4FD1F5;
+  --radius:20px; --maxw:1240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition-duration:0.001s!important;scroll-behavior:auto!important;}}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;line-height:1.15;letter-spacing:-0.02em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:var(--violet);text-decoration:none;}
+img,svg{max-width:100%;display:block;}
+.container{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+section{padding:120px 0;position:relative;}
+
+.skip-link{position:absolute;left:-999px;top:0;background:var(--lime);color:var(--bg);padding:12px 20px;border-radius:0 0 10px 0;z-index:1000;font-weight:700;}
+.skip-link:focus{left:0;}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--lime);outline-offset:3px;box-shadow:0 0 0 6px var(--bg);border-radius:6px;}
+
+.navbar{position:sticky;top:0;z-index:100;background:rgba(6,5,16,0.7);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;max-width:var(--maxw);margin:0 auto;}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;font-family:'Space Grotesk',sans-serif;}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime);}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{color:var(--muted);font-weight:500;font-size:14.5px;transition:color 0.2s;}
+.nav-links a:hover{color:var(--text);}
+.nav-actions{display:flex;align-items:center;gap:14px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14.5px;border-radius:10px;padding:11px 20px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.btn-lime{background:var(--lime);color:var(--bg);}
+.btn-lime:hover{background:var(--lime-dark);transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--text);border-color:var(--border);}
+.btn-ghost:hover{background:var(--card-hover);border-color:var(--border-strong);}
+.btn-lg{padding:15px 28px;font-size:15.5px;}
+.mobile-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;}
+
+/* HERO — vibrant animated mesh, no concentrated navy blob */
+.hero{padding:120px 0 100px;text-align:center;position:relative;isolation:isolate;overflow:hidden;}
+.mesh-blob{position:absolute;border-radius:50%;filter:blur(70px);mix-blend-mode:screen;z-index:-1;}
+.mesh-1{width:380px;height:380px;background:var(--violet-deep);opacity:0.55;top:-100px;left:8%;animation:drift1 14s ease-in-out infinite;}
+.mesh-2{width:300px;height:300px;background:var(--lime);opacity:0.35;top:20px;right:12%;animation:drift2 11s ease-in-out infinite;}
+.mesh-3{width:260px;height:260px;background:var(--coral);opacity:0.3;top:180px;left:38%;animation:drift3 16s ease-in-out infinite;}
+.mesh-4{width:220px;height:220px;background:var(--cyan);opacity:0.28;top:-60px;right:35%;animation:drift4 13s ease-in-out infinite;}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(60px,50px) scale(1.15);}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-50px,40px) scale(1.1);}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(40px,-30px) scale(1.2);}}
+@keyframes drift4{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-30px,-40px) scale(1.12);}}
+.grain-overlay{position:absolute;inset:0;z-index:-1;opacity:0.04;background-image:radial-gradient(circle,#fff 1px,transparent 1px);background-size:22px 22px;}
+
+.fade-up{opacity:0;transform:translateY(24px);animation:fadeUp 0.8s ease forwards;}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:7px 18px;font-size:13px;font-weight:500;color:var(--lime);margin-bottom:28px;}
+.eyebrow .pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulseDot 1.6s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(198,241,53,0.6);}50%{box-shadow:0 0 0 6px rgba(198,241,53,0);}}
+.hero h1{font-size:clamp(38px,6.5vw,72px);max-width:940px;margin:0 auto 12px;background:linear-gradient(180deg,#fff 0%,var(--text) 60%,var(--muted) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+
+.rotating-line{font-size:clamp(22px,3.4vw,34px);font-family:'Space Grotesk',sans-serif;font-weight:600;margin-bottom:26px;height:1.3em;display:flex;align-items:center;justify-content:center;gap:2px;}
+.rotating-line .static-part{color:var(--text);}
+.rotating-word{color:var(--lime);display:inline-block;min-width:10px;}
+.type-cursor{display:inline-block;width:3px;height:0.9em;background:var(--lime);margin-left:4px;animation:cursorBlink 0.9s step-end infinite;}
+@keyframes cursorBlink{0%,50%{opacity:1;}51%,100%{opacity:0;}}
+@media (prefers-reduced-motion: reduce){.type-cursor{animation:none;opacity:1;}}
+
+@keyframes swapText{0%{opacity:0;transform:translateY(8px);}100%{opacity:1;transform:translateY(0);}}
+.hero .lead{font-size:19px;color:var(--muted);max-width:600px;margin:0 auto 40px;}
+.hero-ctas{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:64px;}
+.hero-note{font-size:13px;color:var(--muted);}
+.hero-visual{max-width:920px;margin:0 auto;border-radius:24px;overflow:hidden;border:1px solid var(--border);background:linear-gradient(180deg,var(--card) 0%,var(--bg-2) 100%);box-shadow:0 30px 80px rgba(0,0,0,0.5);transition:transform 0.15s ease-out;will-change:transform;}
+.hero-visual-inner{padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;}
+.mic-visualizer{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.mic-core{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--lime),var(--lime-dark));display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 0 30px rgba(198,241,53,0.4);}
+.mic-ring{position:absolute;border:2px solid var(--lime);border-radius:50%;opacity:0;animation:ringPulse 2.4s ease-out infinite;}
+.mic-ring.r1{width:80px;height:80px;animation-delay:0s;}
+.mic-ring.r2{width:80px;height:80px;animation-delay:0.8s;}
+.mic-ring.r3{width:80px;height:80px;animation-delay:1.6s;}
+@keyframes ringPulse{0%{width:80px;height:80px;opacity:0.6;}100%{width:170px;height:170px;opacity:0;}}
+.mic-label{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+.terminal-dots{display:flex;gap:8px;margin-bottom:20px;}
+.terminal-dots span{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,0.15);}
+.mini-wave{display:flex;align-items:center;gap:4px;height:40px;margin-bottom:20px;}
+.mini-bar{width:4px;background:var(--lime);border-radius:2px;animation:mwave 1s ease-in-out infinite;}
+@keyframes mwave{0%,100%{height:8px;}50%{height:32px;}}
+.hero-bars{display:flex;flex-direction:column;gap:10px;}
+.hero-bar{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--violet-deep),transparent);position:relative;overflow:hidden;}
+.hero-bar::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 2.5s ease-in-out infinite;}
+@keyframes shimmer{to{left:130%;}}
+
+.section-head{max-width:680px;margin:0 auto 64px;text-align:center;}
+.tag-label{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--lime);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;}
+.section-head h2{font-size:clamp(30px,4.5vw,46px);margin-bottom:16px;}
+.section-head p{color:var(--muted);font-size:17px;}
+
+.problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+.problem-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:34px;transition:transform 0.2s,border-color 0.2s;}
+.problem-card:hover{transform:translateY(-3px);border-color:var(--border-strong);}
+.problem-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:18px;}
+.problem-card h3{font-size:19px;margin-bottom:12px;color:var(--amber);}
+.problem-card p{color:var(--muted);font-size:15px;}
+
+.cap-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.cap-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:38px;transition:all 0.25s;}
+.cap-card:hover{border-color:var(--border-strong);background:var(--card-hover);transform:translateY(-3px);}
+.cap-top{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.cap-icon{width:50px;height:50px;border-radius:14px;background:rgba(177,151,252,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cap-persona{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--lime);text-transform:uppercase;letter-spacing:0.06em;}
+.cap-card h3{font-size:21px;margin-bottom:12px;}
+.cap-card p{color:var(--muted);font-size:15px;margin-bottom:18px;}
+.cap-proof{display:flex;align-items:center;gap:10px;padding-top:16px;border-top:1px solid var(--border);font-size:13.5px;color:var(--muted);}
+.cap-proof strong{color:var(--text);}
+
+.steps-row{position:relative;max-width:760px;margin:0 auto;padding:20px 0;}
+.timeline-track{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--border);transform:translateX(-50%);z-index:0;}
+.timeline-glow{position:absolute;left:50%;top:0;width:22px;height:22px;border-radius:50%;background:var(--lime);transform:translate(-50%,-50%);box-shadow:0 0 20px 6px rgba(198,241,53,0.7),0 0 40px 14px rgba(198,241,53,0.3);z-index:2;transition:top 0.05s linear;}
+.steps-list{display:flex;flex-direction:column;gap:64px;position:relative;z-index:1;}
+.step{width:52%;padding:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);opacity:0;transition:opacity 0.35s ease, transform 0.35s ease;}
+.step.step-left{align-self:flex-start;transform:translateX(-50px);}
+.step.step-right{align-self:flex-end;transform:translateX(50px);}
+.step.in-view{opacity:1;transform:translateX(0);}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--lime);margin-bottom:16px;display:inline-block;background:var(--bg-2);border:1px solid var(--border-strong);border-radius:8px;padding:4px 10px;}
+.step h3{font-size:19px;margin-bottom:10px;}
+.step p{color:var(--muted);font-size:14.5px;}
+
+@media(max-width:900px){
+  .timeline-track,.timeline-glow{left:20px;}
+  .step{width:100%;align-self:flex-start!important;padding-left:44px;}
+  .step.step-left,.step.step-right{transform:translateY(24px);}
+  .step.in-view{transform:translateY(0);}
+}
+@media (prefers-reduced-motion: reduce){
+  .step{opacity:1!important;transform:none!important;transition:none!important;}
+  .timeline-glow{display:none;}
+}
+
+.demo-panel{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:48px;max-width:800px;margin:0 auto;}
+.waveform{display:flex;align-items:center;gap:5px;height:56px;margin-bottom:28px;justify-content:center;}
+.wave-bar{width:5px;background:var(--lime);border-radius:3px;animation:wave 1.1s ease-in-out infinite;}
+@keyframes wave{0%,100%{height:10px;}50%{height:44px;}}
+.transcript-box{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:24px;min-height:180px;}
+.transcript-line{font-family:'JetBrains Mono',monospace;font-size:14.5px;color:var(--text);opacity:0;animation:fadeIn 0.5s forwards;margin-bottom:10px;}
+.transcript-line span.tag{color:var(--lime);margin-right:10px;}
+@keyframes fadeIn{to{opacity:1;}}
+
+.pour-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:48px;}
+.pour-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;}
+.pour-letter{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;color:var(--lime);margin-bottom:16px;}
+.pour-card h3{font-size:18px;margin-bottom:10px;}
+.pour-card p{color:var(--muted);font-size:14.5px;}
+.kbd-panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px;max-width:700px;margin:0 auto;}
+.kbd-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.kbd-panel-head h3{font-size:16px;}
+.kbd-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);}
+.kbd-row:last-child{border-bottom:none;}
+.kbd-row span:first-child{color:var(--muted);font-size:14.5px;}
+kbd{background:var(--bg-2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--lime);}
+
+.access-panel{background:linear-gradient(135deg,rgba(198,241,53,0.08),var(--card));border:1px solid var(--border-strong);border-radius:28px;padding:60px;max-width:820px;margin:0 auto;text-align:center;}
+.access-panel h2{font-size:clamp(26px,3.6vw,36px);margin-bottom:16px;}
+.access-panel p{color:var(--muted);font-size:16px;margin-bottom:32px;max-width:520px;margin-left:auto;margin-right:auto;}
+.access-form{display:flex;gap:12px;max-width:440px;margin:0 auto 16px;flex-wrap:wrap;}
+.access-form input{flex:1;min-width:220px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--text);font-size:15px;font-family:'Inter',sans-serif;}
+.access-form input::placeholder{color:var(--muted);}
+.access-form input:focus-visible{outline:3px solid var(--lime);outline-offset:2px;}
+.access-perks{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:13.5px;color:var(--muted);}
+.access-perks span::before{content:"✓ ";color:var(--lime);font-weight:700;}
+
+.faq-list{max-width:800px;margin:0 auto;}
+details.faq-item{border-bottom:1px solid var(--border);padding:24px 0;}
+summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:2px;}
+summary::-webkit-details-marker{display:none;}
+summary::after{content:"+";font-size:24px;color:var(--lime);transition:transform 0.2s;flex-shrink:0;margin-left:20px;}
+details[open] summary::after{transform:rotate(45deg);}
+.faq-item p{color:var(--muted);margin-top:14px;font-size:15px;}
+
+.cta-banner{background:linear-gradient(135deg,var(--violet-deep) 0%,#4A2FA8 100%);border-radius:28px;padding:72px 48px;text-align:center;margin:0 24px;max-width:calc(var(--maxw) - 48px);margin-left:auto;margin-right:auto;}
+.cta-banner h2{color:#fff;margin-bottom:14px;}
+.cta-banner p{color:rgba(255,255,255,0.8);margin-bottom:32px;font-size:17px;}
+
+footer{border-top:1px solid var(--border);padding:70px 0 30px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+.footer-col h4{font-size:14px;margin-bottom:18px;color:var(--text);text-transform:uppercase;letter-spacing:0.05em;}
+.footer-col ul{list-style:none;}
+.footer-col ul li{margin-bottom:11px;}
+.footer-col a{color:var(--muted);font-size:14.5px;}
+.footer-col a:hover{color:var(--text);}
+.social-icons{display:flex;gap:12px;margin-top:18px;}
+.social-icons a{width:38px;height:38px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+.footer-bottom{border-top:1px solid var(--border);padding-top:26px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted);}
+
+@media(max-width:900px){
+  .hero-visual-inner{grid-template-columns:1fr;}
+  .problem-grid{grid-template-columns:1fr;}
+  .cap-grid{grid-template-columns:1fr;}
+  .steps-row{grid-template-columns:repeat(2,1fr);gap:24px;}
+  .step::after{display:none;}
+  .pour-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:repeat(2,1fr);}
+  .nav-links{display:none;}
+  .mobile-menu-btn{display:block;}
+  .access-panel{padding:40px 24px;}
+}
+@media(max-width:560px){
+  .footer-grid{grid-template-columns:1fr;}
+  section{padding:80px 0;}
+  .access-form{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header class="navbar">
+  <div class="nav-inner">
+    <a href="#" class="logo" aria-label="EchoNotes home"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="#problem">Why EchoNotes</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="#accessibility">Accessibility</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <a href="/login.html" class="btn btn-ghost">Log in</a>
+      <a href="/login.html" class="btn btn-lime">Sign up</a>
+      <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+  <section class="hero" id="heroSection">
+    <div class="mesh-blob mesh-1" aria-hidden="true"></div>
+    <div class="mesh-blob mesh-2" aria-hidden="true"></div>
+    <div class="mesh-blob mesh-3" aria-hidden="true"></div>
+    <div class="mesh-blob mesh-4" aria-hidden="true"></div>
+    <div class="grain-overlay" aria-hidden="true"></div>
+    <div class="container">
+      <span class="eyebrow fade-up" style="animation-delay:0s;"><span class="pulse-dot" aria-hidden="true"></span>Now live — accessible note-taking for students</span>
+      <h1 class="fade-up" style="animation-delay:0.1s;">Lectures move fast.<br>Your notes shouldn't fall behind.</h1>
+      <p class="rotating-line fade-up" style="animation-delay:0.15s;"><span class="static-part">Built for&nbsp;</span><span class="rotating-word" id="rotatingWord"></span><span class="type-cursor" aria-hidden="true"></span></p>
+      <p class="lead fade-up" style="animation-delay:0.2s;">EchoNotes listens in real time and turns spoken lectures into clean, structured notes — with screen-reader support, live captions, and zero-drag controls, so nobody falls behind.</p>
+      <div class="hero-ctas fade-up" style="animation-delay:0.3s;">
+        <a href="/login.html" class="btn btn-lime btn-lg">Sign up free</a>
+        <a href="#demo" class="btn btn-ghost btn-lg">Watch the live demo</a>
+      </div>
+      <p class="hero-note">No credit card. Free forever for verified students.</p>
+    </div>
+    <div class="container">
+      <div class="hero-visual fade-up" id="heroCard" style="animation-delay:0.4s;">
+        <div class="hero-visual-inner">
+          <div class="mic-visualizer">
+            <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+              <div class="mic-ring r1" aria-hidden="true"></div>
+              <div class="mic-ring r2" aria-hidden="true"></div>
+              <div class="mic-ring r3" aria-hidden="true"></div>
+              <div class="mic-core" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#060510"/><path d="M6 11a6 6 0 0 0 12 0" stroke="#060510" stroke-width="2" stroke-linecap="round"/><path d="M12 19v3M9 22h6" stroke="#060510" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <span class="mic-label">Listening…</span>
+          </div>
+          <div>
+            <div class="terminal-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="mini-wave" aria-hidden="true">
+              <div class="mini-bar" style="animation-delay:0s"></div><div class="mini-bar" style="animation-delay:0.1s"></div><div class="mini-bar" style="animation-delay:0.2s"></div><div class="mini-bar" style="animation-delay:0.15s"></div><div class="mini-bar" style="animation-delay:0.3s"></div><div class="mini-bar" style="animation-delay:0.05s"></div><div class="mini-bar" style="animation-delay:0.25s"></div><div class="mini-bar" style="animation-delay:0.12s"></div><div class="mini-bar" style="animation-delay:0.22s"></div><div class="mini-bar" style="animation-delay:0.08s"></div>
+            </div>
+            <div class="hero-bars" aria-hidden="true">
+              <div class="hero-bar" style="width:72%"></div>
+              <div class="hero-bar" style="width:45%"></div>
+              <div class="hero-bar" style="width:58%"></div>
+              <div class="hero-bar" style="width:31%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="problem" style="background:var(--bg-2);">
+    <div class="container">
+      <div class="section-head">
+        <span class="tag-label">The problem</span>
+        <h2>Lecture notes were never designed for you</h2>
+        <p>Most note-taking tools assume you can see the slide, hear the professor, and type fast enough to keep up. For millions of students, none of that is guaranteed.</p>
+      </div>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="problem-num">01</div>
+          <h3>You can't see what's projected</h3>
+          <p>Slides flash by, whiteboards get erased, and screen readers can't parse a photo of a blackboard.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-num">02</div>
+          <h3>You can't hear every word</h3>
+          <p>Fast talkers, accents, and back-row seating turn a 60-minute lecture into 40 minutes of guesswork.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-num">03</div>
+          <h3>You can't type fast enough</h3>
+          <p>Motor impairments and RSI make manual note-taking painful — or impossible — during a live class.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="container">
+      <div class="section-head">
+        <span class="tag-label">Capabilities</span>
+        <h2>One tool. Every kind of learner.</h2>
+        <p>Four impairment categories, four dedicated experiences — not one generic transcript view stretched to fit everyone.</p>
+      </div>
+      <div class="cap-grid">
+        <div class="cap-card">
+          <div class="cap-top">
+            <div class="cap-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#B197FC" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="#B197FC" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+            <span class="cap-persona">Blind &amp; low-vision students</span>
+          </div>
+          <h3>Navigate by ear, not by eye</h3>
+          <p>Every screen is built around correct landmark regions and reading order, so a screen reader announces exactly what's on screen — no guesswork, no dead ends.</p>
+          <div class="cap-proof"><strong>Tested with</strong>&nbsp;NVDA, JAWS &amp; VoiceOver on every release</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-top">
+            <div class="cap-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 16 0v5a2 2 0 0 1-2 2h-1v-6h3M4 17v-5h3v6H6a2 2 0 0 1-2-2z" stroke="#B197FC" stroke-width="1.8"/></svg></div>
+            <span class="cap-persona">deaf &amp; hard-of-hearing students</span>
+          </div>
+          <h3>Captions that sync, not lag</h3>
+          <p>Live captions render with speaker labels and visual emphasis cues, so tone and inflection aren't lost when text replaces sound.</p>
+          <div class="cap-proof"><strong>Latency</strong>&nbsp;under 300ms from speech to caption</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-top">
+            <div class="cap-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" stroke="#B197FC" stroke-width="1.8"/><path d="M8 12h8" stroke="#B197FC" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+            <span class="cap-persona">Motor impairments</span>
+          </div>
+          <h3>Zero drag, zero tiny targets</h3>
+          <p>Record, edit, and export run entirely on voice commands or keyboard shortcuts. Nothing in the interface requires a precise click or a drag gesture.</p>
+          <div class="cap-proof"><strong>Full flow</strong>&nbsp;operable without touching a mouse</div>
+        </div>
+        <div class="cap-card">
+          <div class="cap-top">
+            <div class="cap-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke="#B197FC" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+            <span class="cap-persona">Every classroom</span>
+          </div>
+          <h3>Notes that are study-ready on exit</h3>
+          <p>EchoNotes doesn't just transcribe — it structures. Headings, bullet points, and key-term glossaries build themselves as the lecture unfolds.</p>
+          <div class="cap-proof"><strong>Output</strong>&nbsp;auto-formatted, no cleanup pass needed</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works" style="background:var(--bg-2);">
+    <div class="container">
+      <div class="section-head">
+        <span class="tag-label">Workflow</span>
+        <h2>From spoken word to study notes in four steps</h2>
+        <p>No manual formatting. No cleanup pass. No missed sentences.</p>
+      </div>
+      <div class="steps-row" id="stepsRow">
+  <div class="timeline-track" aria-hidden="true"></div>
+  <div class="timeline-glow" id="timelineGlow" aria-hidden="true"></div>
+  <div class="steps-list">
+    <div class="step step-left" data-step="0"><div class="step-num mono">01</div><h3>Speak</h3><p>Start recording with a single voice command or keyboard shortcut — no menu hunting required.</p></div>
+    <div class="step step-right" data-step="1"><div class="step-num mono">02</div><h3>Transcribe</h3><p>Live speech-to-text appears instantly, with each speaker automatically identified and labeled.</p></div>
+    <div class="step step-left" data-step="2"><div class="step-num mono">03</div><h3>Organize</h3><p>An on-device model restructures the raw transcript into headings, key terms, and clean bullet points.</p></div>
+    <div class="step step-right" data-step="3"><div class="step-num mono">04</div><h3>Export</h3><p>Download as accessible PDF, Word, or HTML — screen-reader-ready, in one tap.</p></div>
+  </div>
+</div>
+  </section>
+
+  <section id="demo">
+    <div class="container">
+      <div class="section-head">
+        <span class="tag-label">Live preview</span>
+        <h2>Watch EchoNotes think in real time</h2>
+        <p>A simulated preview of the transcription and auto-organization engine.</p>
+      </div>
+      <div class="demo-panel" role="group" aria-label="Simulated live transcription demo">
+        <div class="waveform" aria-hidden="true">
+          <div class="wave-bar" style="animation-delay:0s"></div><div class="wave-bar" style="animation-delay:0.1s"></div><div class="wave-bar" style="animation-delay:0.2s"></div><div class="wave-bar" style="animation-delay:0.3s"></div><div class="wave-bar" style="animation-delay:0.15s"></div><div class="wave-bar" style="animation-delay:0.25s"></div><div class="wave-bar" style="animation-delay:0.05s"></div><div class="wave-bar" style="animation-delay:0.35s"></div>
+        </div>
+        <div class="transcript-box" id="transcriptOutput" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="accessibility" style="background:var(--bg-2);">
+    <div class="container">
+      <div class="section-head">
+        <span class="tag-label">Our commitment</span>
+        <h2>Accessibility, broken down honestly</h2>
+        <p>We build against the same four principles that define WCAG itself — not a marketing checklist.</p>
+      </div>
+      <div class="pour-grid">
+        <div class="pour-card">
+          <div class="pour-letter">P</div>
+          <h3>Perceivable</h3>
+          <p>Every color pairing on this site is verified at 6:1 to 17:1 contrast — well past the WCAG AA minimum of 4.5:1 — and text scales to 200% without breaking layout.</p>
+        </div>
+        <div class="pour-card">
+          <div class="pour-letter">O</div>
+          <h3>Operable</h3>
+          <p>Every action has a keyboard path and a visible, high-contrast focus ring. Nothing in EchoNotes requires precise pointer control or a timed response.</p>
+        </div>
+        <div class="pour-card">
+          <div class="pour-letter">U</div>
+          <h3>Understandable</h3>
+          <p>Plain-language labels, consistent navigation, and predictable behavior — screen-reader users always know what a control will do before activating it.</p>
+        </div>
+      </div>
+      <div class="kbd-panel">
+        <div class="kbd-panel-head"><h3>Keyboard shortcuts, no mouse required</h3></div>
+        <div class="kbd-row"><span>Start / stop recording</span><span><kbd>Space</kbd></span></div>
+        <div class="kbd-row"><span>Export current notes</span><span><kbd>Ctrl</kbd> + <kbd>E</kbd></span></div>
+        <div class="kbd-row"><span>Search transcript</span><span><kbd>Ctrl</kbd> + <kbd>K</kbd></span></div>
+        <div class="kbd-row"><span>Move between controls</span><span><kbd>Tab</kbd></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="access">
+    <div class="container">
+      <div class="access-panel">
+        <span class="tag-label">Get started</span>
+        <h2>Sign up and take your first lecture note today</h2>
+        <p>Create your free account in under a minute — no credit card, no approval wait, just a verified student email.</p>
+        <form class="access-form" action="/login.html" method="GET">
+          <label for="email-input" style="position:absolute;left:-9999px;">Email address</label>
+          <input type="email" id="email-input" placeholder="you@university.edu" required>
+          <button type="submit" class="btn btn-lime">Sign up free</button>
+        </form>
+        <div class="access-perks">
+          <span>Free for verified students</span>
+          <span>No credit card</span>
+          <span>Priority accessibility support</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="background:var(--bg-2);">
+    <div class="container">
+      <div class="section-head"><span class="tag-label">Questions</span><h2>Frequently asked questions</h2></div>
+      <div class="faq-list">
+        <details class="faq-item"><summary>Is EchoNotes really free for students?</summary><p>Yes — every core feature is free with a verified student email, with no time limit on recording length.</p></details>
+        <details class="faq-item"><summary>Does it work with screen readers like JAWS or NVDA?</summary><p>Yes, every control carries correct ARIA labeling and landmark regions, tested with JAWS, NVDA, and VoiceOver on each release.</p></details>
+        <details class="faq-item"><summary>Can I use EchoNotes without a mouse?</summary><p>Yes — recording, editing, and exporting are all operable purely via keyboard or voice command.</p></details>
+        <details class="faq-item"><summary>What languages are supported?</summary><p>English, Hindi, and Gujarati at launch, with more added based on student demand.</p></details>
+        <details class="faq-item"><summary>How long does sign-up take?</summary><p>Under a minute — enter your student email, verify it, and you're taking notes on your first lecture.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="cta-banner">
+        <h2>Stop losing lectures to fast talkers and bad seats.</h2>
+        <p>Sign up in under a minute — free, no credit card.</p>
+        <a href="/login.html" class="btn btn-lime btn-lg">Sign up free</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="logo" style="margin-bottom:14px;"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</div>
+        <p style="font-size:14px;color:var(--muted);max-width:260px;">Voice-activated, accessible lecture notes for every kind of learner.</p>
+        <div class="social-icons">
+          <a href="#" aria-label="EchoNotes on Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="#EDEBFF" aria-hidden="true"><path d="M22 5.9c-.7.3-1.5.5-2.3.6.8-.5 1.4-1.3 1.7-2.3-.8.5-1.7.8-2.6 1-1.5-1.6-4-1.7-5.6-.2-1 1-1.5 2.4-1.2 3.8-3.2-.2-6.1-1.7-8.1-4.1-1 1.8-.5 4.1 1.3 5.3-.7 0-1.4-.2-2-.5 0 1.9 1.3 3.5 3.1 3.9-.6.2-1.3.2-2 .1.6 1.7 2.2 2.9 4 2.9-1.5 1.2-3.4 1.8-5.4 1.6 1.9 1.2 4.1 1.9 6.4 1.9 7.7 0 11.9-6.4 11.7-12.2.8-.6 1.5-1.3 2-2.1z"/></svg></a>
+          <a href="#" aria-label="EchoNotes on Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EDEBFF" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+          <a href="#" aria-label="EchoNotes on YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EDEBFF" stroke-width="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z" fill="#EDEBFF" stroke="none"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col"><h4>Product</h4><ul><li><a href="#features">Features</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="/login.html">Sign up</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Contact</a></li></ul></div>
+      <div class="footer-col"><h4>Legal</h4><ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Accessibility Statement</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 EchoNotes. All rights reserved.</span>
+      <span>Built with WCAG 2.2 AA compliance.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const lines = [
+  { tag:'Prof.', text:'Today we cover thermodynamics — the first law of energy conservation.' },
+  { tag:'Note:', text:'Key term detected — "closed system" — added to glossary.' },
+  { tag:'Prof.', text:'Remember: energy cannot be created or destroyed, only transformed.' },
+  { tag:'Export:', text:'Section auto-organized under heading "Thermodynamics — Lecture 4".' }
+];
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const output = document.getElementById('transcriptOutput');
+function renderLine(i){
+  if(i >= lines.length){ if(!reduceMotion) setTimeout(()=>{output.innerHTML='';renderLine(0);},2800); return; }
+  const div = document.createElement('div');
+  div.className = 'transcript-line';
+  div.innerHTML = `<span class="tag">${lines[i].tag}</span>${lines[i].text}`;
+  if(reduceMotion) div.style.opacity='1';
+  output.appendChild(div);
+  if(!reduceMotion) setTimeout(()=>renderLine(i+1),1300);
+}
+renderLine(0);
+
+const stepsRow = document.getElementById('stepsRow');
+const timelineGlow = document.getElementById('timelineGlow');
+const stepEls = Array.from(document.querySelectorAll('.step'));
+
+if(stepsRow && timelineGlow && !reduceMotion){
+  let ticking = false;
+
+  function updateTimeline(){
+    const rect = stepsRow.getBoundingClientRect();
+    const viewportCenter = window.innerHeight * 0.55;
+    const trackHeight = rect.height;
+
+    let progressPx = viewportCenter - rect.top;
+    progressPx = Math.max(0, Math.min(trackHeight, progressPx));
+    timelineGlow.style.top = progressPx + 'px';
+
+    stepEls.forEach(step => {
+      const stepRect = step.getBoundingClientRect();
+      const stepMidFromRowTop = (stepRect.top - rect.top) + (stepRect.height / 2);
+      if(progressPx >= stepMidFromRowTop){
+        step.classList.add('in-view');
+      } else {
+        step.classList.remove('in-view');
+      }
+    });
+
+    ticking = false;
+  }
+
+  function onScroll(){
+    if(!ticking){
+      requestAnimationFrame(updateTimeline);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  updateTimeline();
+} else if(reduceMotion){
+  stepEls.forEach(step => step.classList.add('in-view'));
+}
+
+const rotatingWords = ['every learner','blind students','deaf students','motor-impaired students'];
+const rotatingEl = document.getElementById('rotatingWord');
+
+if(reduceMotion){
+  rotatingEl.textContent = rotatingWords[0];
+} else if(rotatingEl){
+  let wordIndex = 0;
+  let charIndex = 0;
+  let typing = true;
+
+  const TYPE_SPEED = 70;
+  const ERASE_SPEED = 40;
+  const HOLD_AFTER_TYPE = 1400;
+  const HOLD_AFTER_ERASE = 300;
+
+  function tick(){
+    const currentWord = rotatingWords[wordIndex];
+
+    if(typing){
+      if(charIndex <= currentWord.length){
+        rotatingEl.textContent = currentWord.slice(0, charIndex);
+        charIndex++;
+        setTimeout(tick, TYPE_SPEED);
+      } else {
+        typing = false;
+        setTimeout(tick, HOLD_AFTER_TYPE);
+      }
+    } else {
+      if(charIndex >= 0){
+        rotatingEl.textContent = currentWord.slice(0, charIndex);
+        charIndex--;
+        setTimeout(tick, ERASE_SPEED);
+      } else {
+        typing = true;
+        wordIndex = (wordIndex + 1) % rotatingWords.length;
+        charIndex = 0;
+        setTimeout(tick, HOLD_AFTER_ERASE);
+      }
+    }
+  }
+  tick();
+}
+const heroCard = document.getElementById('heroCard');
+const heroSection = document.getElementById('heroSection');
+if(!reduceMotion && heroCard){
+  heroSection.addEventListener('mousemove', (e) => {
+    const rect = heroSection.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    heroCard.style.transform = `rotateX(${y * -4}deg) rotateY(${x * 4}deg) translateY(${y * -6}px)`;
+  });
+  heroSection.addEventListener('mouseleave', () => {
+    heroCard.style.transform = 'rotateX(0) rotateY(0) translateY(0)';
+  });
+}
+</script>
+</body>
+</html>
