@@ -1,6 +1,10 @@
-// Supabase configuration - You will replace these placeholders during the final deployment step!
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// Ensure supabase client is only initialized once globally
+if (!window.supabaseClientInstance) {
+  // TODO: Replace these placeholders with your actual Supabase URL and Anon Key from your Supabase Dashboard (Settings -> API)
+  const SUPABASE_URL = "https://uwhfjhhafozgobzamvfd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_dMzMLsrAcQ3Ui5AiBZO1fw_Hve6ZDnV";
 
-// Initialize the Supabase client using the global object provided by the CDN in the HTML
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabaseClientInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+const supabase = window.supabaseClientInstance;

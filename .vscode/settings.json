@@ -1,4 +1,6 @@
 {
-  "deno.enable": true,
+  "deno.enablePaths": [
+    "supabase"
+  ],
   "deno.lint": true
 }
