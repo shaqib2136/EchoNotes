@@ -1,4 +1,6 @@
 // Grab the forms and the alert message container from the DOM
+const supabase = window.supabaseClient;
+
 const loginForm = document.getElementById('form-login');
 const signupForm = document.getElementById('form-signup');
 const alertMessage = document.getElementById('alert-message');
