@@ -47,7 +47,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{o
 .btn-lg{padding:15px 28px;font-size:15.5px;}
 .mobile-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;}
 
-/* HERO — vibrant animated mesh, no concentrated navy blob */
+/* HERO — vibrant animated mesh */
 .hero{padding:120px 0 100px;text-align:center;position:relative;isolation:isolate;overflow:hidden;}
 .mesh-blob{position:absolute;border-radius:50%;filter:blur(70px);mix-blend-mode:screen;z-index:-1;}
 .mesh-1{width:380px;height:380px;background:var(--violet-deep);opacity:0.55;top:-100px;left:8%;animation:drift1 14s ease-in-out infinite;}
@@ -235,8 +235,8 @@ footer{border-top:1px solid var(--border);padding:70px 0 30px;}
       </ul>
     </nav>
     <div class="nav-actions">
-      <a href="/login.html" class="btn btn-ghost">Log in</a>
-      <a href="/login.html" class="btn btn-lime">Sign up</a>
+      <a href="/frontend/login.html" class="btn btn-ghost">Log in</a>
+      <a href="/frontend/login.html?mode=signup" class="btn btn-lime">Sign up</a>
       <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
     </div>
   </div>
@@ -255,7 +255,7 @@ footer{border-top:1px solid var(--border);padding:70px 0 30px;}
       <p class="rotating-line fade-up" style="animation-delay:0.15s;"><span class="static-part">Built for&nbsp;</span><span class="rotating-word" id="rotatingWord"></span><span class="type-cursor" aria-hidden="true"></span></p>
       <p class="lead fade-up" style="animation-delay:0.2s;">EchoNotes listens in real time and turns spoken lectures into clean, structured notes — with screen-reader support, live captions, and zero-drag controls, so nobody falls behind.</p>
       <div class="hero-ctas fade-up" style="animation-delay:0.3s;">
-        <a href="/login.html" class="btn btn-lime btn-lg">Sign up free</a>
+        <a href="/frontend/login.html?mode=signup" class="btn btn-lime btn-lg">Sign up free</a>
         <a href="#demo" class="btn btn-ghost btn-lg">Watch the live demo</a>
       </div>
       <p class="hero-note">No credit card. Free forever for verified students.</p>
@@ -441,7 +441,7 @@ footer{border-top:1px solid var(--border);padding:70px 0 30px;}
         <span class="tag-label">Get started</span>
         <h2>Sign up and take your first lecture note today</h2>
         <p>Create your free account in under a minute — no credit card, no approval wait, just a verified student email.</p>
-        <form class="access-form" action="/login.html" method="GET">
+        <form class="access-form" onsubmit="event.preventDefault(); window.location.href='/frontend/login.html?mode=signup';">
           <label for="email-input" style="position:absolute;left:-9999px;">Email address</label>
           <input type="email" id="email-input" placeholder="you@university.edu" required>
           <button type="submit" class="btn btn-lime">Sign up free</button>
@@ -473,7 +473,7 @@ footer{border-top:1px solid var(--border);padding:70px 0 30px;}
       <div class="cta-banner">
         <h2>Stop losing lectures to fast talkers and bad seats.</h2>
         <p>Sign up in under a minute — free, no credit card.</p>
-        <a href="/login.html" class="btn btn-lime btn-lg">Sign up free</a>
+        <a href="/frontend/login.html?mode=signup" class="btn btn-lime btn-lg">Sign up free</a>
       </div>
     </div>
   </section>
@@ -491,7 +491,7 @@ footer{border-top:1px solid var(--border);padding:70px 0 30px;}
           <a href="#" aria-label="EchoNotes on YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EDEBFF" stroke-width="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z" fill="#EDEBFF" stroke="none"/></svg></a>
         </div>
       </div>
-      <div class="footer-col"><h4>Product</h4><ul><li><a href="#features">Features</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="/login.html">Sign up</a></li></ul></div>
+      <div class="footer-col"><h4>Product</h4><ul><li><a href="#features">Features</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="/frontend/login.html?mode=signup">Sign up</a></li></ul></div>
       <div class="footer-col"><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Contact</a></li></ul></div>
       <div class="footer-col"><h4>Legal</h4><ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Accessibility Statement</a></li></ul></div>
     </div>

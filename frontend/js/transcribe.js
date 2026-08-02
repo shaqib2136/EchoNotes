@@ -1,179 +1,312 @@
-// State variables
-let isRecording = false;
-let fullTranscript = [];
-let speechEngine = null;
-let useFallback = false;
+import { supabase, SUPABASE_URL } from './supabaseClient.js';
 
-// DOM Elements
-const micBtn = document.getElementById('mic-btn');
-const finishBtn = document.getElementById('finish-btn');
-const feed = document.getElementById('transcript-feed');
-const engineBadge = document.getElementById('engine-badge');
-const alertMessage = document.getElementById('alert-message');
-const loadingOverlay = document.getElementById('loading-overlay');
+document.addEventListener('DOMContentLoaded', () => {
+  const micToggle = document.getElementById('mic-toggle');
+  const micStatus = document.getElementById('mic-status');
+  const finishBtn = document.getElementById('finish-btn');
+  const languageSelect = document.getElementById('language-select');
+  const transcriptContent = document.getElementById('transcript-content');
+  const engineDot = document.getElementById('engine-dot');
+  const engineLabel = document.getElementById('engine-label');
 
-// Ensure user is authenticated
-async function checkAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = '/login.html';
-  }
-}
-checkAuth();
+  let isRecording = false;
+  let isFallback = false;
+  let socket = null;
+  let audioContext = null;
+  let processor = null;
+  let source = null;
+  let recognition = null;
+  let localStream = null;
 
-// Keyboard shortcut (Space to toggle)
-document.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' && document.activeElement.tagName !== 'BUTTON') {
-    e.preventDefault();
-    toggleRecording();
-  }
-});
-
-micBtn.addEventListener('click', toggleRecording);
-
-async function toggleRecording() {
-  if (isRecording) {
-    stopRecording();
-  } else {
-    startRecording();
-  }
-}
-
-function updateBadge(engineName, isActive) {
-  engineBadge.textContent = `Engine: ${engineName}`;
-  if (isActive) {
-    engineBadge.classList.add('active');
-  } else {
-    engineBadge.classList.remove('active');
-  }
-}
-
-function appendTranscriptLine(text) {
-  if (feed.querySelector('div[style]')) feed.innerHTML = ''; // Clear default message
-
-  const now = new Date();
-  const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  const line = document.createElement('div');
-  line.className = 't-line';
-  line.innerHTML = `<div class="t-time">[${timeString}]</div><div class="t-text">${text}</div>`;
-  
-  feed.appendChild(line);
-  feed.scrollTop = feed.scrollHeight;
-  fullTranscript.push(text);
-  
-  // Enable finish button if we have data
-  if (fullTranscript.length > 0) {
-    finishBtn.disabled = false;
-  }
-}
-
-function startRecording() {
-  isRecording = true;
-  micBtn.setAttribute('aria-pressed', 'true');
-  micBtn.setAttribute('aria-label', 'Stop recording');
-  alertMessage.style.display = 'none';
-
-  // Primary: Attempt AssemblyAI WebSocket via Edge Function (Assumption: wss endpoint will be provided by backend)
-  // For now, if the primary fails or isn't hooked up yet, gracefully fallback to Web Speech API.
-  try {
-    startWebSpeechFallback();
-  } catch (err) {
-    alertMessage.textContent = "Audio capture failed. Please check microphone permissions.";
-    alertMessage.className = "alert error";
-    stopRecording();
-  }
-}
-
-function stopRecording() {
-  isRecording = false;
-  micBtn.setAttribute('aria-pressed', 'false');
-  micBtn.setAttribute('aria-label', 'Start recording');
-  updateBadge('Offline', false);
-
-  if (speechEngine) {
-    speechEngine.stop();
-  }
-}
-
-// Fallback Engine: Web Speech API
-function startWebSpeechFallback() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alertMessage.textContent = "Your browser does not support live transcription. Please use Chrome or Edge.";
-    alertMessage.className = "alert error";
-    stopRecording();
-    return;
+  function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  speechEngine = new SpeechRecognition();
-  speechEngine.continuous = true;
-  speechEngine.interimResults = false; // Only get finalized sentences for cleaner feed
-
-  speechEngine.onstart = () => {
-    updateBadge('WebSpeech API', true);
-  };
-
-  speechEngine.onresult = (event) => {
-    const transcript = event.results[event.results.length - 1][0].transcript.trim();
-    if (transcript) {
-      appendTranscriptLine(transcript);
-    }
-  };
-
-  speechEngine.onerror = (event) => {
-    if (event.error === 'not-allowed') {
-      alertMessage.textContent = "Microphone access denied.";
-      alertMessage.className = "alert error";
-      stopRecording();
-    }
-  };
-
-  speechEngine.onend = () => {
-    // Web Speech API silently times out after ~60s of silence. 
-    // If we are still supposed to be recording, automatically restart it.
-    if (isRecording) {
-      try {
-        speechEngine.start();
-      } catch (e) {
-        // Handle edge cases where it might already be started
-      }
-    }
-  };
-
-  speechEngine.start();
-}
-
-// Finish & Generate Logic
-finishBtn.addEventListener('click', async () => {
-  if (isRecording) stopRecording();
-  if (fullTranscript.length === 0) return;
-
-  loadingOverlay.classList.add('active');
-  loadingOverlay.setAttribute('aria-hidden', 'false');
-
-  const combinedText = fullTranscript.join(' ');
-  const title = "Lecture - " + new Date().toLocaleDateString();
-
-  try {
-    // Call our structure-notes Edge Function
-    const { data: { session } } = await supabase.auth.getSession();
+  function appendTranscriptLine(text, isInterim = false) {
+    const lineId = isInterim ? 'interim-line' : `line-${Date.now()}`;
     
-    // NOTE: This uses Supabase Edge Functions. We will deploy this in the final step.
-    const { data, error } = await supabase.functions.invoke('structure-notes', {
-      body: { transcript: combinedText, title: title }
-    });
+    // Remove existing interim line if present
+    const existingInterim = document.getElementById('interim-line');
+    if (existingInterim) {
+      existingInterim.remove();
+    }
 
-    if (error) throw error;
-
-    // The edge function will insert the note into the DB and return the note ID.
-    // Redirect to the newly created note.
-    window.location.href = `/note.html?id=${data.note_id}`;
-
-  } catch (err) {
-    loadingOverlay.classList.remove('active');
-    loadingOverlay.setAttribute('aria-hidden', 'true');
-    alertMessage.textContent = "Failed to generate notes. " + err.message;
-    alertMessage.className = "alert error";
+    const div = document.createElement('div');
+    div.className = `transcript-line ${isInterim ? 'interim' : ''}`;
+    div.id = lineId;
+    
+    const time = document.createElement('span');
+    time.className = 'time-tag';
+    time.textContent = `[${formatTime(new Date())}]`;
+    
+    const content = document.createElement('span');
+    content.className = 'text-content';
+    content.textContent = text;
+    
+    div.appendChild(time);
+    div.appendChild(content);
+    
+    transcriptContent.appendChild(div);
+    transcriptContent.scrollTop = transcriptContent.scrollHeight;
   }
+
+  function stopAudio() {
+    if (processor) { processor.disconnect(); processor = null; }
+    if (source) { source.disconnect(); source = null; }
+    if (audioContext) { audioContext.close(); audioContext = null; }
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  }
+
+  function toggleRecording() {
+    isRecording = !isRecording;
+    
+    micToggle.setAttribute('aria-pressed', isRecording);
+    micToggle.setAttribute('aria-label', isRecording ? 'Stop recording' : 'Start recording');
+    
+    if (isRecording) {
+      transcriptContent.innerHTML = '';
+      micStatus.textContent = 'Connecting...';
+      engineDot.style.background = 'var(--amber)';
+      engineLabel.textContent = 'Engine: Connecting';
+      finishBtn.disabled = false;
+      finishBtn.setAttribute('aria-disabled', 'false');
+      languageSelect.disabled = true; 
+      isFallback = false;
+      
+      startAssemblyAI();
+    } else {
+      micStatus.textContent = 'Paused';
+      engineDot.style.background = 'var(--amber)';
+      engineLabel.textContent = 'Engine: Standby';
+      languageSelect.disabled = false;
+      
+      const existingInterim = document.getElementById('interim-line');
+      if (existingInterim) existingInterim.remove();
+      
+      if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ terminate_session: true }));
+          socket.close();
+      }
+      if (recognition) {
+          recognition.stop();
+      }
+      stopAudio();
+    }
+  }
+
+  async function startAssemblyAI() {
+    try {
+        const langMap = { en: 'en', es: 'es', fr: 'fr', hi: 'hi' };
+        const lang = langMap[languageSelect.value] || 'en';
+        
+        // Connect to the Supabase Edge Function which proxies the AssemblyAI WS connection
+        const baseWsUrl = SUPABASE_URL.replace(/^http/, 'ws');
+        const wsUrl = `${baseWsUrl}/functions/v1/transcribe-stream?lang=${lang}`;
+        
+        socket = new WebSocket(wsUrl);
+        
+        socket.onopen = async () => {
+            micStatus.textContent = 'Listening...';
+            engineDot.style.background = 'var(--lime)';
+            engineLabel.textContent = 'Engine: AssemblyAI (Real-time)';
+            
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                source = audioContext.createMediaStreamSource(localStream);
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                processor.onaudioprocess = (e) => {
+                    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    const pcmData = new Int16Array(inputData.length);
+                    for (let i = 0; i < inputData.length; i++) {
+                        pcmData[i] = Math.min(1, Math.max(-1, inputData[i])) * 0x7FFF;
+                    }
+                    const buffer = new ArrayBuffer(pcmData.length * 2);
+                    const view = new DataView(buffer);
+                    for (let i = 0; i < pcmData.length; i++) {
+                        view.setInt16(i * 2, pcmData[i], true);
+                    }
+                    let binary = '';
+                    const bytes = new Uint8Array(buffer);
+                    for (let i = 0; i < bytes.byteLength; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    const base64 = window.btoa(binary);
+                    socket.send(JSON.stringify({ audio_data: base64 }));
+                };
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+            } catch (mediaErr) {
+                console.error("Microphone access denied or error:", mediaErr);
+                appendTranscriptLine("Error: Microphone access denied.", false);
+                toggleRecording();
+            }
+        };
+        
+        socket.onmessage = (event) => {
+            const res = JSON.parse(event.data);
+            if (res.message_type === 'PartialTranscript' && res.text) {
+                appendTranscriptLine(res.text, true);
+            } else if (res.message_type === 'FinalTranscript' && res.text) {
+                appendTranscriptLine(res.text, false);
+            } else if (res.error) {
+                console.error('AssemblyAI Error:', res.error);
+                fallbackToWebSpeech();
+            }
+        };
+        
+        socket.onerror = (err) => {
+            console.error("WebSocket Proxy Error", err);
+            fallbackToWebSpeech();
+        };
+        
+        socket.onclose = () => {
+            if (isRecording && !isFallback) fallbackToWebSpeech();
+        };
+        
+    } catch (err) {
+        console.error("Init Error", err);
+        fallbackToWebSpeech();
+    }
+  }
+
+  function fallbackToWebSpeech() {
+    if (!isRecording || isFallback) return;
+    isFallback = true;
+    
+    stopAudio();
+    
+    engineDot.style.background = 'var(--cyan)';
+    engineLabel.textContent = 'Engine: Web Speech (Fallback)';
+    micStatus.textContent = 'Listening (Fallback)...';
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        appendTranscriptLine("Error: Your browser does not support speech recognition. Please try Chrome or Edge.", false);
+        toggleRecording(); 
+        return;
+    }
+    
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    
+    const langMap = { en: 'en-US', hi: 'hi-IN', es: 'es-ES', fr: 'fr-FR' };
+    recognition.lang = langMap[languageSelect.value] || 'en-US';
+    
+    recognition.onresult = (event) => {
+        let interim = '';
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                final += event.results[i][0].transcript;
+            } else {
+                interim += event.results[i][0].transcript;
+            }
+        }
+        if (final) appendTranscriptLine(final, false);
+        if (interim) appendTranscriptLine(interim, true);
+    };
+    
+    recognition.onerror = (event) => {
+        console.error('Web Speech Error:', event.error);
+        if (event.error === 'not-allowed' || event.error === 'audio-capture' || event.error === 'network') {
+            appendTranscriptLine(`Error: Web Speech API failed (${event.error}).`, false);
+            if (isRecording) {
+                toggleRecording();
+            }
+        }
+    };
+    
+    recognition.onend = () => {
+        // Auto-restart if still recording (handles the ~60s idle cutoff)
+        if (isRecording && isFallback) {
+            try { recognition.start(); } catch(e){}
+        }
+    };
+    
+    try { recognition.start(); } catch(e){}
+  }
+
+  micToggle.addEventListener('click', toggleRecording);
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target !== micToggle) {
+      e.preventDefault();
+      toggleRecording();
+    }
+    
+    if ((e.ctrlKey || e.metaKey) && e.code === 'KeyE') {
+      e.preventDefault();
+      if (!finishBtn.disabled) finishBtn.click();
+    }
+  });
+
+  finishBtn.addEventListener('click', async () => {
+    if (isRecording) {
+      toggleRecording();
+    }
+    
+    const finalLines = Array.from(document.querySelectorAll('.transcript-line:not(.interim) .text-content'))
+                            .map(el => el.textContent)
+                            .join(' ');
+    
+    if (!finalLines.trim()) {
+      alert("No transcript to process.");
+      return;
+    }
+    
+    micStatus.textContent = 'Generating notes...';
+    finishBtn.disabled = true;
+    finishBtn.textContent = 'Processing...';
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You must be logged in to save notes.");
+      }
+
+      // Call Supabase Edge Function to process transcript with Gemini
+      let structuredNotes = {};
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('structure-notes', {
+          body: { raw_transcript: finalLines, language: languageSelect.value }
+        });
+
+        if (fnError) throw fnError;
+        if (data.error) throw new Error(data.error);
+        structuredNotes = data;
+      } catch (structErr) {
+        console.error("Structuring failed, saving raw transcript only:", structErr);
+        if (structErr.message && structErr.message.includes('Failed to send a request')) {
+            alert("Could not reach the Edge Function for structuring. Ensure it is deployed to Supabase. Saving raw transcript instead.");
+        }
+        // Fallback to empty structure, raw transcript will still be saved
+      }
+
+      // Save to database
+      const { data: note, error: dbError } = await supabase.from('notes').insert({
+        user_id: user.id,
+        title: structuredNotes.title || 'Untitled Lecture',
+        language: structuredNotes.language || languageSelect.value,
+        raw_transcript: finalLines,
+        structured_notes: structuredNotes
+      }).select('id').single();
+
+      if (dbError) throw dbError;
+
+      // Redirect to the newly created note page (to be built in next step)
+      window.location.href = `/frontend/note.html?id=${note.id}`;
+
+    } catch (err) {
+      console.error("Note generation error:", err);
+      alert(`Error generating notes: ${err.message}`);
+      finishBtn.textContent = 'Finish & Generate Notes';
+      finishBtn.disabled = false;
+      micStatus.textContent = 'Ready to record';
+    }
+  });
 });

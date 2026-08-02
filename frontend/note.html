@@ -1,72 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>View Note — EchoNotes</title>
-<meta name="description" content="View and export your structured lecture notes.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/styles.css">
-<style>
-  .note-layout { max-width: 840px; margin: 40px auto 80px; padding: 0 24px; min-height: 70vh; }
-  .note-header-area { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
-  .note-title-display { font-size: clamp(28px, 4vw, 40px); margin-bottom: 8px; line-height: 1.2; }
-  .note-meta { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-  
-  .export-group { display: flex; gap: 12px; background: var(--bg-2); padding: 8px; border-radius: 14px; border: 1px solid var(--border); }
-  .export-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; transition: all 0.2s; }
-  .export-btn:hover { background: var(--card-hover); border-color: var(--lime); color: var(--lime); transform: translateY(-2px); }
-  .export-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  
-  .note-content { font-size: 16px; line-height: 1.7; color: var(--text); }
-  .section-heading { font-size: 22px; color: var(--lime); margin: 40px 0 16px; }
-  .bullet-list { list-style: none; padding-left: 0; margin-bottom: 24px; }
-  .bullet-list li { position: relative; padding-left: 28px; margin-bottom: 14px; }
-  .bullet-list li::before { content: "→"; color: var(--muted); position: absolute; left: 0; font-family: 'JetBrains Mono', monospace; }
-  
-  .glossary-card { background: linear-gradient(180deg, var(--card) 0%, var(--bg-2) 100%); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-top: 60px; }
-  .glossary-title { font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-  .glossary-title::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--amber); }
-  .glossary-item { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed rgba(255,171,74,0.2); }
-  .glossary-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-  .glossary-term { font-family: 'JetBrains Mono', monospace; color: var(--amber); font-weight: 600; display: block; margin-bottom: 4px; }
-  
-  .raw-transcript-toggle { margin-top: 60px; text-align: center; }
-  .raw-transcript-box { display: none; background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted); margin-top: 16px; text-align: left; height: 300px; overflow-y: auto; }
-  .raw-transcript-box.open { display: block; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Note - EchoNotes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #060510; --bg-2: #0B0918; --card: #0F0D22; --card-hover: #151230;
+      --border: rgba(177,151,252,0.16); --border-strong: rgba(198,241,53,0.5);
+      --text: #EDEBFF; --muted: #A8A4C9; --violet: #B197FC; --violet-deep: #7C5CF0;
+      --lime: #C6F135; --lime-dark: #9BC219; --amber: #FFAB4A; --coral: #FF6F91; --cyan: #4FD1F5;
+      --radius: 20px; --maxw: 900px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition-duration: 0.001s !important; scroll-behavior: auto !important; }
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
+    a { color: var(--violet); text-decoration: none; }
+    
+    .skip-link { position: absolute; left: -999px; top: 0; background: var(--lime); color: var(--bg); padding: 12px 20px; border-radius: 0 0 10px 0; z-index: 1000; font-weight: 700; }
+    .skip-link:focus { left: 0; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; box-shadow: 0 0 0 6px var(--bg); border-radius: 6px; }
+
+    .navbar { position: sticky; top: 0; z-index: 100; background: rgba(6,5,16,0.7); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; max-width: 1240px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; font-family: 'Space Grotesk', sans-serif; color: var(--text); }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 12px var(--lime); }
+    
+    .nav-actions { display: flex; align-items: center; gap: 14px; }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14.5px; border-radius: 10px; padding: 11px 20px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: inherit; }
+    .btn-lime { background: var(--lime); color: var(--bg); }
+    .btn-lime:hover { background: var(--lime-dark); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--card-hover); border-color: var(--border-strong); }
+
+    .container { max-width: var(--maxw); margin: 0 auto; padding: 40px 24px; width: 100%; flex: 1; }
+    
+    .loader { display: block; width: 40px; height: 40px; border: 3px solid rgba(198,241,53,0.2); border-radius: 50%; border-top-color: var(--lime); animation: spin 1s ease-in-out infinite; margin: 60px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .error-state { text-align: center; padding: 60px 24px; color: var(--coral); display: none; }
+    
+    .note-header { margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 24px; display: none; }
+    .note-date { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--lime); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 8px; padding: 4px 10px; }
+    .note-title { font-size: clamp(32px, 5vw, 48px); margin-bottom: 24px; color: var(--text); }
+    
+    .export-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    
+    .note-content { display: none; display: flex; flex-direction: column; gap: 48px; padding-bottom: 80px; }
+    
+    .summary-section { background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; border-left: 4px solid var(--violet); }
+    .summary-section h2 { font-size: 18px; margin-bottom: 12px; color: var(--violet); }
+    .summary-section p { font-size: 16px; color: var(--text); }
+    
+    .sections-container { display: flex; flex-direction: column; gap: 32px; }
+    .section-block { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; }
+    .section-block h3 { font-size: 22px; margin-bottom: 20px; color: var(--lime); border-bottom: 1px solid rgba(198,241,53,0.2); padding-bottom: 12px; }
+    .section-block ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .section-block li { position: relative; padding-left: 24px; font-size: 16px; color: var(--text); }
+    .section-block li::before { content: "•"; position: absolute; left: 0; color: var(--muted); font-size: 20px; line-height: 1; top: 0; }
+    
+    .glossary-section { background: linear-gradient(135deg, rgba(198,241,53,0.05), var(--card)); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 32px; }
+    .glossary-section h2 { font-size: 24px; margin-bottom: 24px; }
+    .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .glossary-item { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .glossary-term { font-family: 'JetBrains Mono', monospace; font-size: 14.5px; color: var(--amber); margin-bottom: 8px; font-weight: 500; }
+    .glossary-def { font-size: 14px; color: var(--muted); }
+  </style>
 </head>
 <body>
-<a href="#main-content" class="skip-link">Skip to main content</a>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<header class="navbar">
-  <div class="nav-inner">
-    <a href="dashboard.html" class="logo" aria-label="EchoNotes Dashboard"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</a>
-    <div class="nav-actions">
-      <a href="dashboard.html" class="btn btn-ghost">Back to Dashboard</a>
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="dashboard.html" class="logo" aria-label="Back to dashboard"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</a>
+      <div class="nav-actions">
+        <a href="dashboard.html" class="btn btn-ghost">← Back</a>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<main id="main-content" class="note-layout">
-  <div id="alert-message" class="alert" aria-live="polite" role="status"></div>
+  <main id="main-content" class="container">
+    <div id="loader" class="loader" aria-label="Loading note" role="status"></div>
+    <div id="error-state" class="error-state" role="alert"></div>
+
+    <div id="note-header" class="note-header" style="display: none;">
+      <div class="note-date" id="note-date"></div>
+      <h1 class="note-title" id="note-title"></h1>
+      <div class="export-actions">
+        <button id="export-pdf" class="btn btn-ghost" aria-label="Export as PDF document">Export PDF</button>
+        <button id="export-docx" class="btn btn-ghost" aria-label="Export as Word document">Export DOCX</button>
+        <button id="export-txt" class="btn btn-ghost" aria-label="Export as plain text">Export TXT</button>
+      </div>
+    </div>
+
+    <div id="note-content" class="note-content" style="display: none;">
+      <div class="summary-section" id="summary-section" aria-labelledby="summary-heading">
+        <h2 id="summary-heading">Summary</h2>
+        <p id="note-summary"></p>
+      </div>
+
+      <div class="sections-container" id="sections-container">
+        <!-- Sections will be injected here -->
+      </div>
+
+      <div class="glossary-section" id="glossary-section" aria-labelledby="glossary-heading">
+        <h2 id="glossary-heading">Key Terms</h2>
+        <div class="glossary-grid" id="glossary-grid">
+          <!-- Glossary items will be injected here -->
+        </div>
+      </div>
+      
+      <div class="raw-transcript-section" id="raw-transcript-section" aria-labelledby="raw-transcript-heading" style="display: none; background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+        <h2 id="raw-transcript-heading" style="font-size: 18px; margin-bottom: 12px; color: var(--muted);">Raw Transcript (Unstructured)</h2>
+        <p id="raw-transcript-content" style="font-size: 16px; color: var(--text); white-space: pre-wrap;"></p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Load dependencies for export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
   
-  <div id="note-container" aria-live="polite">
-    <!-- Loading State -->
-    <div style="text-align: center; padding: 60px 0; color: var(--muted);">Loading your notes...</div>
-  </div>
-</main>
-
-<!-- External Libraries for Exporting -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://unpkg.com/docx@8.2.3/build/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Our custom scripts -->
-<script src="./js/supabaseClient.js"></script>
-<script src="./js/export.js"></script>
-<script src="./js/note.js"></script>
+  <script type="module" src="./js/export.js"></script>
+  <script type="module" src="./js/a11y-panel.js"></script>
+  <script type="module" src="./js/note.js"></script>
 </body>
 </html>

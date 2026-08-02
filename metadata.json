@@ -1,0 +1,10 @@
+{
+  "name": "EchoNotes",
+  "description": "A voice-activated, multilingual, accessible lecture note-taking web app.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

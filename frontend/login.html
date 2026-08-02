@@ -1,155 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log In — EchoNotes</title>
-<meta name="description" content="Log in or sign up to EchoNotes.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/styles.css">
-<style>
-  .auth-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .auth-card {
-    width: 100%;
-    max-width: 440px;
-    position: relative;
-    z-index: 10;
-    text-align: center;
-  }
-  .auth-header {
-    margin-bottom: 32px;
-  }
-  .auth-header h1 {
-    font-size: 32px;
-    margin-bottom: 8px;
-  }
-  .auth-header p {
-    color: var(--muted);
-  }
-  .toggle-group {
-    display: flex;
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 6px;
-    margin-bottom: 32px;
-  }
-  .toggle-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    padding: 10px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .toggle-btn[aria-pressed="true"] {
-    background: var(--card-hover);
-    color: var(--text);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-  .auth-form {
-    display: none;
-  }
-  .auth-form.active {
-    display: block;
-  }
-  /* Mesh backgrounds for visual consistency */
-  .mesh-blob { position: absolute; border-radius: 50%; filter: blur(70px); mix-blend-mode: screen; z-index: 0; }
-  .mesh-1 { width: 400px; height: 400px; background: var(--violet-deep); opacity: 0.4; top: -100px; left: -100px; }
-  .mesh-2 { width: 300px; height: 300px; background: var(--lime); opacity: 0.2; bottom: -50px; right: -50px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in - EchoNotes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #060510; --bg-2: #0B0918; --card: #0F0D22; --card-hover: #151230;
+      --border: rgba(177,151,252,0.16); --border-strong: rgba(198,241,53,0.5);
+      --text: #EDEBFF; --muted: #A8A4C9; --violet: #B197FC; --violet-deep: #7C5CF0;
+      --lime: #C6F135; --lime-dark: #9BC219; --amber: #FFAB4A; --coral: #FF6F91; --cyan: #4FD1F5;
+      --radius: 20px; --maxw: 1240px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition-duration: 0.001s !important; scroll-behavior: auto !important; }
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
+    h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; }
+    a { color: var(--violet); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    
+    .skip-link { position: absolute; left: -999px; top: 0; background: var(--lime); color: var(--bg); padding: 12px 20px; border-radius: 0 0 10px 0; z-index: 1000; font-weight: 700; }
+    .skip-link:focus { left: 0; }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; box-shadow: 0 0 0 6px var(--bg); border-radius: 6px; }
+
+    .navbar { position: sticky; top: 0; z-index: 100; background: rgba(6,5,16,0.7); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; max-width: var(--maxw); margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; font-family: 'Space Grotesk', sans-serif; color: var(--text); text-decoration: none; }
+    .logo:hover { text-decoration: none; }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 12px var(--lime); }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14.5px; border-radius: 10px; padding: 11px 20px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: inherit; }
+    .btn-lime { background: var(--lime); color: var(--bg); }
+    .btn-lime:hover { background: var(--lime-dark); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--card-hover); border-color: var(--border-strong); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    .auth-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; position: relative; isolation: isolate; }
+    .mesh-blob { position: absolute; border-radius: 50%; filter: blur(70px); mix-blend-mode: screen; z-index: -1; }
+    .mesh-1 { width: 300px; height: 300px; background: var(--violet-deep); opacity: 0.4; top: 10%; left: 20%; animation: drift1 14s ease-in-out infinite; }
+    .mesh-2 { width: 250px; height: 250px; background: var(--lime); opacity: 0.2; bottom: 10%; right: 20%; animation: drift2 11s ease-in-out infinite; }
+    @keyframes drift1 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px, 30px) scale(1.1); } }
+    @keyframes drift2 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px, -30px) scale(1.15); } }
+
+    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 440px; box-shadow: 0 30px 80px rgba(0,0,0,0.4); }
+    .auth-header { text-align: center; margin-bottom: 32px; }
+    .auth-header h1 { font-size: 28px; margin-bottom: 8px; }
+    .auth-header p { color: var(--muted); font-size: 15px; }
+
+    .form-group { margin-bottom: 20px; text-align: left; }
+    .form-group label { display: block; font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .form-group input { width: 100%; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
+    .form-group input::placeholder { color: var(--muted); }
+    .form-group input:focus { border-color: var(--lime); outline: none; }
+    
+    .auth-submit { width: 100%; margin-top: 12px; }
+    
+    .auth-footer { margin-top: 24px; text-align: center; font-size: 14.5px; color: var(--muted); }
+    .auth-footer button.link-btn { background: none; border: none; color: var(--violet); font-size: inherit; font-family: inherit; font-weight: 500; cursor: pointer; padding: 0; }
+    .auth-footer button.link-btn:hover { text-decoration: underline; }
+    
+    .error-message { margin-top: 16px; padding: 12px; border-radius: 8px; background: rgba(255, 111, 145, 0.1); border: 1px solid rgba(255, 111, 145, 0.3); color: var(--coral); font-size: 14px; text-align: center; display: none; }
+    .error-message:not(:empty) { display: block; }
+  </style>
 </head>
 <body>
-<a href="#main-content" class="skip-link">Skip to main content</a>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<header class="navbar">
-  <div class="nav-inner">
-    <a href="index.html" class="logo" aria-label="EchoNotes home"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</a>
-  </div>
-</header>
-
-<main id="main-content" class="auth-container">
-  <div class="mesh-blob mesh-1" aria-hidden="true"></div>
-  <div class="mesh-blob mesh-2" aria-hidden="true"></div>
-
-  <div class="auth-card card-style">
-    <div class="auth-header">
-      <h1 id="auth-title">Welcome back</h1>
-      <p id="auth-desc">Enter your details to access your notes.</p>
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="../index.html" class="logo" aria-label="EchoNotes home"><span class="logo-dot" aria-hidden="true"></span>EchoNotes</a>
     </div>
+  </header>
 
-    <div class="toggle-group" role="group" aria-label="Authentication mode">
-      <button type="button" class="toggle-btn" aria-pressed="true" id="btn-login" onclick="switchTab('login')">Log In</button>
-      <button type="button" class="toggle-btn" aria-pressed="false" id="btn-signup" onclick="switchTab('signup')">Sign Up</button>
+  <main id="main-content" class="auth-container">
+    <div class="mesh-blob mesh-1" aria-hidden="true"></div>
+    <div class="mesh-blob mesh-2" aria-hidden="true"></div>
+    
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 id="auth-title">Welcome back</h1>
+        <p id="auth-subtitle">Log in to access your notes</p>
+      </div>
+
+      <form id="auth-form" novalidate>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@university.edu" required autocomplete="email">
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        
+        <button type="submit" class="btn btn-lime auth-submit" id="submit-btn">Log in</button>
+      </form>
+
+      <div id="auth-error" class="error-message" aria-live="assertive" role="alert"></div>
+
+      <div class="auth-footer">
+        <span id="toggle-text">Don't have an account?</span> 
+        <button type="button" class="link-btn" id="toggle-mode-btn">Sign up free</button>
+      </div>
     </div>
+  </main>
 
-    <div id="alert-message" class="alert" aria-live="polite" role="status"></div>
-
-    <!-- Login Form -->
-    <form id="form-login" class="auth-form active">
-      <div class="form-group">
-        <label for="login-email">Email address</label>
-        <input type="email" id="login-email" class="form-input" placeholder="you@university.edu" required autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" class="form-input" required autocomplete="current-password">
-      </div>
-      <button type="submit" class="btn btn-lime" style="width: 100%; margin-top: 10px;">Log In</button>
-    </form>
-
-    <!-- Signup Form -->
-    <form id="form-signup" class="auth-form">
-      <div class="form-group">
-        <label for="signup-email">Student Email address</label>
-        <input type="email" id="signup-email" class="form-input" placeholder="you@university.edu" required autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label for="signup-password">Create Password</label>
-        <input type="password" id="signup-password" class="form-input" required autocomplete="new-password">
-      </div>
-      <button type="submit" class="btn btn-lime" style="width: 100%; margin-top: 10px;">Create Account</button>
-    </form>
-  </div>
-</main>
-
-<script>
-  function switchTab(tab) {
-    const isLogin = tab === 'login';
-    
-    // Update Buttons
-    document.getElementById('btn-login').setAttribute('aria-pressed', isLogin);
-    document.getElementById('btn-signup').setAttribute('aria-pressed', !isLogin);
-    
-    // Update Forms
-    document.getElementById('form-login').classList.toggle('active', isLogin);
-    document.getElementById('form-signup').classList.toggle('active', !isLogin);
-    
-    // Update Text
-    document.getElementById('auth-title').textContent = isLogin ? 'Welcome back' : 'Create an account';
-    document.getElementById('auth-desc').textContent = isLogin ? 'Enter your details to access your notes.' : 'Free forever for verified students.';
-    
-    // Clear alerts
-    document.getElementById('alert-message').className = 'alert';
-    document.getElementById('alert-message').textContent = '';
-  }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./js/supabaseClient.js"></script>
-<script src="./js/auth.js"></script>
+  <script type="module" src="./js/a11y-panel.js"></script>
+  <script type="module" src="./js/auth.js"></script>
 </body>
 </html>
